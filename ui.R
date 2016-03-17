@@ -31,11 +31,12 @@ body <- dashboardBody(
       tabName = 'preliminary',
       fluidRow(
         tabBox(
-          id = 'preliminary',
+          id = 'preliminary', width = 12, height = 600,
           # Tab1, map
-          tabPanel('Map', leafletOutput('preliminary_map')),
+          tabPanel('Map', leafletOutput('preliminary_map', height = 600)),
           # Tab2, data table
-          tabPanel('Data', tableOutput('preliminary_table'))
+          tabPanel('Data', dataTableOutput('preliminary_table',
+                                           width = '90%', height = 600))
         )
       )
     ),
