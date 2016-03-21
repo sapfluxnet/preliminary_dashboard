@@ -16,32 +16,117 @@
 library(shiny)
 library(leaflet) # for maps
 library(DT) # for datatables
+library(ggplot2) # for plots
+
+# color palette for map & histogram legend
+pal <- c("#D8B70A", "#02401B", "#A2A475", "#81A88D", "#972D15")
 
 shinyServer(function(input, output) {
 
   ### Interactive map data
   # Creating the map
-  output$preliminary_map <- renderLeaflet({
-    leaflet(preliminary_survey_fixed) %>%
-      addTiles(urlTemplate = 'http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}',
-               attribution = 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  output$preliminaryMap <- renderLeaflet({
+    leaflet() %>%
+      addTiles(urlTemplate = 'http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+               attribution = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                options = tileOptions(noWrap = FALSE)) %>%
-      setView(lng = 0, lat = 10, zoom = 2) %>%
+      setView(lng = 60, lat = 10, zoom = 2) #%>%
       # fitBounds(lng1 = -180, lng2 = 180, lat1 = -70, lat2 = 90) %>%
-      addCircleMarkers(lng = ~longitude, lat = ~latitude)
+      # addCircleMarkers(lng = ~longitude, lat = ~latitude, layerId = ~site_name)
       
   })
   
-  ### Data table
-  output$preliminary_table <- renderDataTable({
-    datatable(preliminary_table_data,
-              extensions = list(FixedColumns = list(leftColumns = 5),
-                                Scroller = list()),
-              options = list(scrollX = TRUE, scrollCollapse = TRUE,
-                             scrollY = 400, deferRender = TRUE,
-                             pageLength = 125))
+  # Observer to show colors and sizes of points according tu the variables
+  # selected by the user
+  observe({
+    point_color <- input$color
+    # point_size <- input$size
+
+    # color
+    color_data <- preliminary_map_data[[point_color]]
+    palette <- colorFactor(pal[1:length(unique(preliminary_map_data[[point_color]]))],
+                           color_data)
+
+    # size
+    # size <- preliminary_survey_fixed[[point_size]]
+
+    # add markers to map
+    leafletProxy('preliminaryMap', data = preliminary_map_data) %>%
+      clearMarkers() %>%
+      addCircleMarkers(lng = ~longitude, lat = ~latitude, layerId = ~site_name,
+                 radius = 10,
+                 fillColor = palette(color_data), fillOpacity = 0.8,
+                 stroke = FALSE) %>%
+      addLegend('bottomright', pal = palette, values = color_data,
+                title = point_color, layerId = 'legend_color', opacity = 0.8)
   })
   
+  # function to create the popups
+  site_popup <- function(site, lat, lng) {
+    selected_site <- preliminary_map_data[preliminary_map_data$site_name == site, ]
+    popup_text <- as.character(tagList(
+      tags$h4(selected_site$site_name),
+      tags$strong(selected_site$country), tags$br(),
+      sprintf('Sap flow method: %s', selected_site$sap_flow_method), tags$br(),
+      sprintf('Approximate number of species: %s',
+              selected_site$aprox_numbers_tree_species), tags$br(),
+      sprintf('Approximate number of growing seasons: %s',
+              selected_site$aprox_years_growing_seasons), tags$br(),
+      sprintf('Meteorogical data available: %s',
+              selected_site$meteo_data_available), tags$br()
+    ))
+    leafletProxy('preliminaryMap') %>%
+      addPopups(lng, lat, popup_text, layerId = site)
+  }
   
+  # Observer to show popups at click
+  observe({
+    leafletProxy('preliminaryMap') %>% clearPopups()
+    
+    event <- input$preliminaryMap_marker_click
+    
+    if (is.null(event)) {
+      return()
+    }
+    
+    isolate({
+      site_popup(event$id, event$lat, event$lng)
+    
+    })
+  })
+  
+  # Histogram for color variable selected
+  # we need to play a little with the palette to achieve the
+  # same sequence in leaflet and in ggplot, as leaflet takes
+  # the colors not in order.
+  
+  output$histogram <- renderPlot({
+    ggplot(preliminary_map_data,
+           aes_string(x = input$color, fill = input$color)) +
+      geom_bar(show.legend = FALSE) +
+      scale_fill_manual(
+        values = pal[1:length(unique(preliminary_map_data[[input$color]]))]
+      ) +
+      labs(title = '', x = '', y = 'Number of sites') +
+      theme_minimal() +
+      theme(panel.background = element_blank(),
+            plot.background = element_blank(),
+            axis.text.x = element_blank(),
+            panel.grid = element_blank())
+  },
+  width = 200, height = 200, bg = 'transparent')
+  
+  ### Data table
+  output$preliminary_table <- renderDataTable({
+    datatable(preliminary_map_data,
+              extensions = c('FixedColumns', 'Scroller'),
+              # extensions = list(FixedColumns = list(leftColumns = 5),
+              #                   Scroller = list(), Buttons = list()),
+              options = list(scrollX = TRUE, scrollCollapse = TRUE,
+                             scrollY = 400, deferRender = TRUE,
+                             pageLength = 250, dom = 'Btf',
+                             # buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                             fixedColumns = list(leftColumns = 5)))
+  })
 
 })
