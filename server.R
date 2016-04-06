@@ -27,8 +27,8 @@ shinyServer(function(input, output) {
   # Creating the map
   output$preliminaryMap <- renderLeaflet({
     leaflet() %>%
-      addTiles(urlTemplate = 'http://{s}.tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
-               attribution = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      addTiles(urlTemplate = 'http://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+               attribution = 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
                options = tileOptions(noWrap = FALSE)) %>%
       setView(lng = 60, lat = 10, zoom = 2) #%>%
       # fitBounds(lng1 = -180, lng2 = 180, lat1 = -70, lat2 = 90) %>%
@@ -36,7 +36,7 @@ shinyServer(function(input, output) {
       
   })
   
-  # Observer to show colors and sizes of points according tu the variables
+  # Observer to show colors and sizes of points according to the variables
   # selected by the user
   observe({
     point_color <- input$color
@@ -118,15 +118,56 @@ shinyServer(function(input, output) {
   
   ### Data table
   output$preliminary_table <- renderDataTable({
-    datatable(preliminary_map_data,
-              extensions = c('FixedColumns', 'Scroller'),
-              # extensions = list(FixedColumns = list(leftColumns = 5),
-              #                   Scroller = list(), Buttons = list()),
+    
+    datatable(table_data,
+              extensions = list('FixedColumns' = list(leftColumns = 3),
+                                'Scroller' = NULL),
               options = list(scrollX = TRUE, scrollCollapse = TRUE,
                              scrollY = 400, deferRender = TRUE,
-                             pageLength = 250, dom = 'Btf',
-                             # buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-                             fixedColumns = list(leftColumns = 5)))
+                             pageLength = 250, dom = 'tf', autoWidth = TRUE,
+                             columnDefs = list(list(width = '75px',
+                                                    targets = c(1:11)),
+                                               list(class = 'dt-center',
+                                                    targets = c(1:11))))
+    )
+  })
+  
+  ### Facts pane, valueboxes
+  output$N_sites <- renderValueBox({
+    valueBox(value = length(preliminary_table_data$site_name),
+             subtitle = 'sites willing to contribute',
+             icon = icon('leaf'),
+             color = 'olive')
+  })
+  
+  output$N_wrong_coord <- renderValueBox({
+    valueBox(value = paste((sum(!preliminary_table_data$is_inside_country)/length(preliminary_table_data$is_inside_country))*100,
+                           ' %'),
+             subtitle = paste(sum(!preliminary_table_data$is_inside_country), ' sites with wrong coordinates'),
+             icon = icon('eye'),
+             color = 'red')
+  })
+  
+  output$Meteo_data <- renderValueBox({
+    valueBox(value = paste((sum(preliminary_table_data$meteo_data_available == 'yes')/length(preliminary_table_data$meteo_data_available))*100,
+                           ' %'),
+             subtitle = paste(sum(preliminary_table_data$meteo_data_available == 'yes'), ' sites have environmental data'),
+             icon = icon('cloud'),
+             color = 'teal')
+  })
+  
+  output$Countries <- renderValueBox({
+    valueBox(value = length(unique(preliminary_table_data$country)),
+             subtitle = 'different countries',
+             icon = icon('globe'),
+             color = 'purple')
+  })
+  
+  output$Species <- renderValueBox({
+    valueBox(value = length(species_names_trim),
+             subtitle = 'different species (approx.)',
+             icon = icon('tree-deciduous', lib = "glyphicon"),
+             color = 'green')
   })
 
 })
