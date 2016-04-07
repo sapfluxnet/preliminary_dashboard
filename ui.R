@@ -30,13 +30,14 @@ sidebar <- dashboardSidebar(
     # Map and data section
     menuItem("Map & Data table", tabName = 'preliminary',
              icon = icon('globe')),
+    
     # Facts section
     menuItem('Metadata facts', tabName = 'Facts',
              icon = icon('stats', lib = 'glyphicon')),
-    # TO DO more sections
-    menuItem('More sections', tabName = 'none',
-             icon = icon('warning'),
-             badgeLabel = 'under construction', badgeColor = 'yellow')
+    
+    # Site inspector
+    menuItem('Site inspector', tabName = 'inspector',
+             icon = icon('eye'))
   )
 )
 
@@ -90,11 +91,48 @@ body <- dashboardBody(
       )
     ),
     
-    # More sections
-    tabItem(tabName = 'none',
-            h2('Building more awesome widgets and visualizations ;)'),
-            br(),
-            h3('Please visit us again in a few days'))
+    # Site inspector
+    tabItem(
+      tabName = 'inspector',
+      
+      # Site selector input
+      fluidRow(
+        box(
+          title = tagList(shiny::icon("gear"), 'Site selector'),
+          background = "black", width = 4,
+          selectizeInput(
+            'site_input', 'Site list',
+            choices = sort(preliminary_survey_fixed$site_name),
+            options = list(
+              placeholder = 'Please select a site below',
+              onInitialize = I('function() { this.setValue(""); }')
+            )
+          )
+        )
+      ),
+      
+      # Site info
+      fluidRow(
+        # contributor name
+        box(
+          title = tagList('Contributor',
+                          shiny::icon('user', lib = 'glyphicon')),
+          status = 'primary', solidHeader = TRUE, width = 4,
+          verbatimTextOutput('site_contr')
+        ),
+        
+        # site species
+        box(
+          title = tagList('Species',
+                          shiny::icon('tree-deciduous', lib = "glyphicon")),
+          status = 'primary', solidHeader = TRUE, width = 4,
+          verbatimTextOutput('site_sps')
+        ),
+        
+        # is inside country?
+        infoBoxOutput('coord_ok')
+      )
+    )
   )
 )
 

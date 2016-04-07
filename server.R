@@ -17,6 +17,7 @@ library(shiny)
 library(leaflet) # for maps
 library(DT) # for datatables
 library(ggplot2) # for plots
+library(stringr) # for species names
 
 # color palette for map & histogram legend
 pal <- c("#D8B70A", "#02401B", "#A2A475", "#81A88D", "#972D15")
@@ -168,6 +169,41 @@ shinyServer(function(input, output) {
              subtitle = 'different species (approx.)',
              icon = icon('tree-deciduous', lib = "glyphicon"),
              color = 'green')
+  })
+  
+  # Site inspector pane
+  output$site_sps <- renderPrint({
+    site_sel <- preliminary_survey_fixed[preliminary_survey_fixed$site_name == input$site_input, ]
+    sps <- str_replace_all(site_sel$species, ',', ';')
+    sps <- unlist(str_split(sps, ';'))
+    sps <- str_c(sps, collapse = '\n')
+    cat(sps)
+  })
+  
+  output$site_contr <- renderPrint({
+    site_sel <- preliminary_survey_fixed[preliminary_survey_fixed$site_name == input$site_input, ]
+    name <- str_c(site_sel$first_name, site_sel$last_name, sep = ' ')
+    aff <- str_c(name, site_sel$affiliation, sep = '\n')
+    contr <- str_c(aff, site_sel$country, sep = '\n')
+    cat(contr)
+  })
+  
+  output$coord_ok <- renderInfoBox({
+    if (input$site_input == '') {
+      infoBox('Coordinates', 'NA', icon = shiny::icon('question'),
+              color = 'blue', width = 4, fill = TRUE)
+    } else {
+      site_sel <- preliminary_survey_fixed[preliminary_survey_fixed$site_name == input$site_input, ]
+      if (site_sel$is_inside_country) {
+        infoBox('Coordinates', 'OK', icon = shiny::icon('check'),
+                color = 'blue', width = 4, fill = TRUE)
+      } else {
+        infoBox('Coordinates', 'BAD',
+                icon = shiny::icon('exclamation-sign', lib = 'glyphicon'),
+                color = 'red', width = 4, fill = TRUE,
+                subtitle = 'Please revise coordinates')
+      }
+    }
   })
 
 })
