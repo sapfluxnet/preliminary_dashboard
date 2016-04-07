@@ -14,7 +14,7 @@ color_vars <- c('Sap Flow Method' = 'sap_flow_method',
                 'Growth Condition' = 'growth_condition',
                 'Are coordinates correct?' = 'is_inside_country',
                 'Site with meteorological data available?' = 'meteo_data_available',
-                'Species number (approximate)' = 'aprox_numbers_tree_species')
+                'Trees per species' = 'aprox_numbers_tree_species')
 
 # size_vars <- c('Approximate number of species' = 'aprox_numbers_tree_species',
 #                'Approximate number of growing seasons' = 'aprox_years_growing_seasons')
