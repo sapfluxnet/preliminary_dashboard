@@ -21,19 +21,18 @@ color_vars <- c('Sap Flow Method' = 'sap_flow_method',
 
 
 ## Header for dashboard
-header <- dashboardHeader(title = 'SAPFLUXNET Dashboard', titleWidth = 300)
+header <- dashboardHeader(title = 'SAPFLUXNET Preliminary Survey', titleWidth = 450)
 
 ## Sidebar for dashboard
 sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
-    # Preliminary survey section
+    # Map and data section
     menuItem("Map & Data table", tabName = 'preliminary',
              icon = icon('globe')),
     # Facts section
     menuItem('Metadata facts', tabName = 'Facts',
-             icon = icon('flask'),
-             badgeLabel = "new/experimental", badgeColor = "orange"),
+             icon = icon('stats', lib = 'glyphicon')),
     # TO DO more sections
     menuItem('More sections', tabName = 'none',
              icon = icon('warning'),

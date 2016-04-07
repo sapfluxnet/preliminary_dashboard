@@ -68,7 +68,7 @@ shinyServer(function(input, output) {
       tags$h4(selected_site$site_name),
       tags$strong(selected_site$country), tags$br(),
       sprintf('Sap flow method: %s', selected_site$sap_flow_method), tags$br(),
-      sprintf('Approximate number of species: %s',
+      sprintf('Approximate number of trees per species: %s',
               selected_site$aprox_numbers_tree_species), tags$br(),
       sprintf('Approximate number of growing seasons: %s',
               selected_site$aprox_years_growing_seasons), tags$br(),
